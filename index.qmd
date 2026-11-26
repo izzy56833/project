@@ -1,0 +1,625 @@
+---
+title: "Women in STEM"
+subtitle: "What factors play into a higher Female Gradution Rate?"
+author: "Zoe Eldridge"
+output-file: index.html
+embed-resources: true
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 3
+    toc-location: left
+    toc-title: "Explore the Data"
+    smooth-scroll: true
+    number-sections: false
+    page-layout: full
+    title-block-banner: true
+    title-block-banner-color: white
+    code-copy: true
+    fig-align: center
+    fig-width: 10
+    fig-height: 6
+    embed-resources: true
+
+    include-in-header:
+      - text: |
+          <style>
+
+          /* Website background and text */
+          body {
+            background-color: #f7f4fc;
+            color: #333044;
+            font-family: "Segoe UI", Arial, sans-serif;
+            font-size: 17px;
+            line-height: 1.8;
+          }
+
+          /* Gradient title banner */
+          .quarto-title-banner {
+            background: linear-gradient(
+              135deg, #242044, #7c3aed
+            );
+            color: white;
+            padding: 45px 20px;
+          }
+
+          .quarto-title-banner h1 {
+            color: white;
+            font-size: 3rem;
+            font-weight: 800;
+          }
+
+          .quarto-title-banner .subtitle {
+            color: #e9d5ff;
+            font-size: 1.3rem;
+          }
+
+          /* Main headings */
+          h1 {
+            color: #4c1d95;
+            font-weight: 800;
+          }
+
+          /* Section headings */
+          h2 {
+            color: #6d28d9;
+            font-weight: 700;
+            border-bottom: 3px solid #c4b5fd;
+            padding-bottom: 10px;
+            margin-top: 45px;
+          }
+
+          h3 {
+            color: #7c3aed;
+            font-weight: 600;
+          }
+
+          /* Bold text */
+          strong {
+            color: #6d28d9;
+          }
+
+          /* Links */
+          a {
+            color: #7c3aed;
+            text-decoration: none;
+          }
+
+          a:hover {
+            color: #db2777;
+            text-decoration: underline;
+          }
+
+          /* Interactive charts */
+          .plotly {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px #00000015;
+            margin-top: 20px;
+            margin-bottom: 30px;
+          }
+
+          /* Images */
+          img {
+            border-radius: 15px;
+          }
+
+          /* Table of contents */
+          #TOC {
+            background-color: #ede9fe;
+            padding: 15px;
+            border-radius: 12px;
+          }
+
+          #TOC .active {
+            color: #7c3aed !important;
+            font-weight: bold;
+          }
+
+          /* Callout boxes */
+          .callout {
+            border-radius: 12px;
+            box-shadow: 0 3px 10px #00000010;
+          }
+
+          /* Tables */
+          table {
+            background-color: white;
+            border-radius: 10px;
+          }
+
+          thead {
+            background-color: #ede9fe;
+            color: #4c1d95;
+          }
+
+          /* Highlighted text */
+          ::selection {
+            background: #c4b5fd;
+            color: #242044;
+          }
+
+          /* Horizontal dividers */
+          hr {
+            border: none;
+            height: 2px;
+            background: linear-gradient(
+              to right, #7c3aed, #db2777
+            );
+            margin: 35px 0;
+          }
+
+          </style>
+
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+<p style="font-family:Georgia; font-size:24px; color:#db2777; font-weight:bold; font-style:normal; text-align:left;">
+Research question: What factors contribute to females having a greater gradution rate in STEM? 
+</p>
+
+<p style="font-family:Georgia; font-size:25px; color:#db2777; font-weight:bold; font-style:normal; text-align:left;">
+The data: 
+</p>
+
+```{r}
+#| warning: false
+#| echo: false
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(reactable)
+library(plotly)
+library(crosstalk)
+
+stem_data <- read.csv("women_in_stem.csv")
+colnames(stem_data) <- c(
+  "Country",
+  "Year",
+  "Enrollment",
+  "Graduation",
+  "STEM_Field",
+  "Gender_Gap_Index"
+)
+
+
+```
+
+```{r}
+#| echo: false
+#| warning: false
+
+shared_stem <- SharedData$new(stem_data)
+
+bscols(
+  widths = c(3, 9),
+
+  list(
+    filter_select(
+      "country",
+      "Select a Country",
+      shared_stem,
+      ~Country
+    ),
+
+    filter_select(
+      "field",
+      "Select a STEM Field",
+      shared_stem,
+      ~STEM_Field
+    ),
+
+    filter_slider(
+      "year",
+      "Select Year Range",
+      shared_stem,
+      ~Year,
+      step = 1
+    )
+  ),
+
+  reactable(
+    shared_stem,
+    searchable = TRUE,
+    sortable = TRUE,
+    striped = TRUE,
+    highlight = TRUE,
+    bordered = TRUE,
+    defaultPageSize = 8,
+
+    columns = list(
+      STEM_Field = colDef(name = "STEM Field"),
+
+      Enrollment = colDef(
+        name = "Enrollment (%)",
+        style = function(value) {
+          list(
+            background = "#ede9fe",
+            color = "#4c1d95"
+          )
+        }
+      ),
+
+      Graduation = colDef(
+        name = "Graduation (%)",
+        style = function(value) {
+          list(
+            background = "#fce7f3",
+            color = "#9d174d"
+          )
+        }
+      ),
+
+      Gender_Gap_Index = colDef(
+        name = "Gender Gap Index"
+      )
+    ),
+
+    theme = reactableTheme(
+      color = "#333044",
+      backgroundColor = "#ffffff",
+      borderColor = "#ddd6fe",
+      headerStyle = list(
+        backgroundColor = "#ede9fe",
+        color = "#4c1d95"
+      )
+    )
+  )
+)
+```
+<p style="font-family:Georgia; font-size:30px; color:#db2777; font-weight:bold; font-style:normal; text-align:left;">
+Graph 1: 
+</p>
+
+<p style="font-family:Georgia; font-size:25px; color:#db2777; font-weight:bold; font-style:normal; text-align:left;">
+This graph compares the average percentage of female students enrolled in the STEM field per country:
+</p>
+```{r}
+#| warning: false
+#| echo: false
+country_enrollment <- aggregate(
+  Enrollment ~ Country,
+  data = stem_data,
+  FUN = mean
+)
+
+plot_ly(
+  data = country_enrollment,
+  x = ~Enrollment,
+  y = ~Country,
+  type = "bar",
+  orientation = "h",
+  marker = list(color = "steelblue"),
+  hovertemplate = paste(
+    "%{y}<br>",
+    "Enrollment: %{x:.2f}%",
+    "<extra></extra>"
+  )
+) |>
+  layout(
+    title = "Average Female STEM Enrollment by Country",
+    xaxis = list(
+      title = "Average Female Enrollment (%)",
+      range = c(0, 60)
+    ),
+    yaxis = list(
+      title = "",
+      categoryorder = "total ascending"
+    )
+  )
+```
+<p style="font-family:Georgia; font-size:25px; color:#db2777; font-weight:bold; font-style:normal; text-align:left;">
+Analysis: 
+</p>
+<p style="font-family:Georgia; font-size:15px; color:#333044; font-weight:bold; font-style:normal; text-align:left;">
+This country with the highest female enrollment in STEM fields is the USA with 45.72% enrollment and the lowest enrollment is Germany with 42.65% enrollment. The range of the enrollment is only about a 3% difference, meaning that the countries all have similar female enrollment. 
+</p>
+
+
+
+<p style="font-family:Georgia; font-size:25px; color:#db2777; font-weight:bold; font-style:normal; text-align:left;">
+Graph 2: 
+</p>
+<p style="font-family:Georgia; font-size:25px; color:#db2777; font-weight:bold; font-style:normal; text-align:left;">
+This graph compares average female enrollment vs. the average  graduation rate of females in STEM per country
+</p>
+```{r}
+#| warning: false
+#| echo: false
+country_comparison <- aggregate(
+  cbind(Enrollment, Graduation) ~ Country,
+  data = stem_data,
+  FUN = mean
+)
+
+country_comparison <- country_comparison[
+  order(country_comparison$Enrollment, decreasing = TRUE),
+]
+
+par(mar = c(5, 4, 4, 2))
+
+barplot(
+  t(as.matrix(country_comparison[, c("Enrollment", "Graduation")])),
+  names.arg = country_comparison$Country,
+  beside = TRUE,
+  col = c("steelblue", "pink"),
+  border = NA,
+  main = "Female Enrollment vs. Graduation by Country",
+  xlab = "Country",
+  ylab = "Percentage (%)",
+  ylim = c(0, 65),
+  cex.names = 0.8
+)
+
+legend(
+  "topright",
+  legend = c("Enrollment", "Graduation"),
+  fill = c("steelblue", "pink"),
+  bty = "n"
+)
+```
+<p style="font-family:Georgia; font-size:25px; color:#db2777; font-weight:bold; font-style:normal; text-align:left;">
+Analysis: 
+</p>
+<p style="font-family:Georgia; font-size:15px; color:#333044; font-weight:bold; font-style:normal; text-align:left;">
+While the USA may have the highest enrollment rate of females, it has the biggest difference in enrollment vs. graduation rates. China appears to have the smallest difference. In addition, all the countries appear to have similar average graduation rates. There is not much variation of the graduation rate between countries. 
+</p>
+
+<p style="font-family:Georgia; font-size:25px; color:#db2777; font-weight:bold; font-style:normal; text-align:left;">
+Graph 3: 
+</p>
+<p style="font-family:Georgia; font-size:25px; color:#db2777; font-weight:bold; font-style:normal; text-align:left;">
+This graph compares average female enrollment vs. the average  graduation rate of females in STEM per STEM field
+</p>
+```{r}
+#| warning: false
+#| echo: false
+
+field_comparison <- stem_data %>%
+  group_by(STEM_Field) %>%
+  summarise(
+    Enrollment = mean(Enrollment),
+    Graduation = mean(Graduation),
+    .groups = "drop"
+  ) %>%
+  pivot_longer(
+    cols = c(Enrollment, Graduation),
+    names_to = "Category",
+    values_to = "Percentage"
+  )
+
+p3 <- ggplot(
+  field_comparison,
+  aes(x = STEM_Field, y = Percentage, fill = Category)
+) +
+  geom_col(position = "dodge") +
+  scale_fill_manual(
+    values = c(
+      "Enrollment" = "steelblue",
+      "Graduation" = "pink"
+    )
+  ) +
+  labs(
+    title = "Female Representation Across STEM Fields",
+    x = "STEM Field",
+    y = "Average Percentage (%)",
+    fill = ""
+  ) +
+  expand_limits(y = 60) +
+  theme_minimal()
+
+ggplotly(p3)
+```
+<p style="font-family:Georgia; font-size:25px; color:#db2777; font-weight:bold; font-style:normal; text-align:left;">
+Analysis: 
+</p>
+<p style="font-family:Georgia; font-size:15px; color:#333044; font-weight:bold; font-style:normal; text-align:left;">
+Math has the highest average enrollment rate with a rate of 45.4%, but also the biggest difference between enrollment rate and graduation rate with a graduation rate of 35.4%. The range for both the average enrollment and graduation rate is around 3%, meaning these rates do not vary much across the different STEM fields.
+</p>
+
+<p style="font-family:Georgia; font-size:25px; color:#db2777; font-weight:bold; font-style:normal; text-align:left;">
+Graph 4: 
+</p>
+<p style="font-family:Georgia; font-size:25px; color:#db2777; font-weight:bold; font-style:normal; text-align:left;">
+This graph shows how the average female enrollment and average female graduation rate changed over time.  
+</p>
+
+```{r}
+#| warning: false
+#| echo: false
+
+yearly_trends <- stem_data %>%
+  group_by(Year) %>%
+  summarise(
+    Enrollment = mean(Enrollment),
+    Graduation = mean(Graduation),
+    .groups = "drop"
+  ) %>%
+  pivot_longer(
+    cols = c(Enrollment, Graduation),
+    names_to = "Category",
+    values_to = "Percentage"
+  )
+
+p4 <- ggplot(
+  yearly_trends,
+  aes(x = Year, y = Percentage, color = Category)
+) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 2) +
+  scale_color_manual(
+    values = c(
+      "Enrollment" = "steelblue",
+      "Graduation" = "pink"
+    )
+  ) +
+  labs(
+    title = "Female STEM Participation Over Time",
+    x = "Year",
+    y = "Average Percentage (%)",
+    color = ""
+  ) +
+  scale_x_continuous(breaks = seq(2000, 2023, 2)) +
+  theme_minimal()
+
+ggplotly(p4) %>%
+  layout(
+    xaxis = list(
+      rangeslider = list(visible = TRUE)
+    ),
+    hovermode = "x unified"
+  )
+```
+
+<p style="font-family:Georgia; font-size:25px; color:#db2777; font-weight:bold; font-style:normal; text-align:left;">
+We have showed through these graphs that different countries and STEM fields all have a similar average graduation rate. The previous graph shows there really isn't a pattern to gradution rate either, other than it has been decreasing sadly since 2020, but I wonder if COVID could explain this downfall as the graduation rate before 2020 was increasing. I will now make a model that uses Graduation as the response and enrollment, country, the STEM field, the year, and the gender gap index to see if any of these predictors can explain the graduation rate of females in STEM. 
+</p>
+
+<p style="font-family:Georgia; font-size:25px; color:#db2777; font-weight:bold; font-style:normal; text-align:left;">
+The model with the p-values of the coefficients:
+</p>
+
+```{r}
+stem_model <- lm(
+  Graduation ~ Enrollment + Country + STEM_Field +
+    Year + Gender_Gap_Index,
+  data = stem_data
+)
+
+summary(stem_model)
+```
+<p style="font-family:Georgia; font-size:25px; color:#db2777; font-weight:bold; font-style:normal; text-align:left;">
+Analysis: 
+</p>
+<p style="font-family:Georgia; font-size:15px; color:#333044; font-weight:bold; font-style:normal; text-align:left;">
+This is a terrible model. First, none of the coefficients have a significant P-value. In addition, the R^2 is 0.01521 which means barely any of the variation of the gradution rate is explained by the model. Also, the F-statistic is 0.6851 with a P-value of 0.7532, which means the model is not signicant in predicting graduation rate. Now, I did not check the assumptions and there may be assumptions that are violated, but for right now it does not seem that these predictors predict the graduation rate. 
+</p>
+
+<p style="font-family:Georgia; font-size:25px; color:#db2777; font-weight:bold; font-style:normal; text-align:left;">
+Next two graphs: 
+</p>
+```{r}
+#| echo: false
+#| warning: false
+
+p5 <- ggplot(
+  stem_data,
+  aes(x = Enrollment, y = Graduation)
+) +
+  geom_point(
+    aes(color = Country),
+    alpha = 0.6,
+    size = 2
+  ) +
+  geom_smooth(
+    method = "lm",
+    formula = y ~ x,
+    color = "#4c1d95",
+    se = TRUE
+  ) +
+  labs(
+    title = "Does Higher Enrollment Predict Higher Graduation?",
+    x = "Female Enrollment (%)",
+    y = "Female Graduation (%)",
+    color = "Country"
+  ) +
+  theme_minimal()
+
+ggplotly(p5)
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| fig-height: 2.5
+
+correlation <- cor(
+  stem_data$Enrollment,
+  stem_data$Graduation,
+  use = "complete.obs"
+)
+
+plot_ly() %>%
+  add_segments(
+    x = -1, xend = -1/3,
+    y = 0, yend = 0,
+    line = list(color = "#93c5fd", width = 15),
+    hoverinfo = "skip"
+  ) %>%
+  add_segments(
+    x = -1/3, xend = 1/3,
+    y = 0, yend = 0,
+    line = list(color = "#d1d5db", width = 15),
+    hoverinfo = "skip"
+  ) %>%
+  add_segments(
+    x = 1/3, xend = 1,
+    y = 0, yend = 0,
+    line = list(color = "#c4b5fd", width = 15),
+    hoverinfo = "skip"
+  ) %>%
+  add_markers(
+    x = correlation,
+    y = 0,
+    marker = list(
+      size = 23,
+      color = "#7c3aed",
+      line = list(color = "white", width = 3)
+    ),
+    text = paste(
+      "Correlation:", round(correlation, 4)
+    ),
+    hoverinfo = "text"
+  ) %>%
+  layout(
+    title = list(
+      text = paste0(
+        "Correlation Coefficient<br>",
+        "<b>r = ", round(correlation, 4), "</b>"
+      ),
+      font = list(
+        size = 22,
+        color = "#7c3aed"
+      )
+    ),
+    xaxis = list(
+      range = c(-1.1, 1.1),
+      tickvals = c(-1, 0, 1),
+      ticktext = c(
+        "-1<br>Negative",
+        "0<br>No linear correlation",
+        "+1<br>Positive"
+      ),
+      showgrid = FALSE,
+      zeroline = FALSE,
+      showline = FALSE,
+      fixedrange = TRUE
+    ),
+    yaxis = list(
+      visible = FALSE,
+      range = c(-0.5, 0.5),
+      fixedrange = TRUE
+    ),
+    showlegend = FALSE,
+    paper_bgcolor = "#ffffff",
+    plot_bgcolor = "#ffffff",
+    margin = list(l = 30, r = 30, t = 90, b = 60),
+    height = 240
+  ) %>%
+  config(displayModeBar = FALSE)
+
+```
+<p style="font-family:Georgia; font-size:20px; color:#db2777; font-weight:bold; font-style:normal; text-align:left;">
+In conclusion, it appears that the country, STEM field, year, STEM enrollment, or any of the other predictors do not have an affect on the graduation rate of females in STEM.
+</p>
+
+
+
+
+
+Women in STEM: Global Education Trends Dataset (2000-2023). 
+Compiled from UNESCO, OECD, and national education statistics. 
+Published on Kaggle, 2024.
